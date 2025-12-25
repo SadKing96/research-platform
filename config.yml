@@ -1,0 +1,8 @@
+url: http://localhost:5173
+tunnel: e0cb60f9-b1e5-4171-ae36-1ae026761381
+credentials-file: C:\Users\zluke\.cloudflared\e0cb60f9-b1e5-4171-ae36-1ae026761381.json
+
+ingress:
+  - hostname: kingzkingdom.com
+    service: http://localhost:5173
+  - service: http_status:404
