@@ -29,7 +29,39 @@ if (process.env.DATABASE_URL) {
       type TEXT,
       file TEXT,
       date TEXT
-    )`).catch(err => console.error('Error creating table in PG', err));
+    )`).catch(err => console.error('Error creating papers table in PG', err));
+
+    pool.query(`CREATE TABLE IF NOT EXISTS sections (
+      id SERIAL PRIMARY KEY,
+      label TEXT NOT NULL,
+      path TEXT NOT NULL,
+      category TEXT NOT NULL
+    )`).then(async () => {
+        const res = await pool.query('SELECT count(*) FROM sections');
+        if (parseInt(res.rows[0].count) === 0) {
+            const defaults = [
+                ['History', '/history', 'history'],
+                ['Physics', '/physics', 'physics'],
+                ['Philosophy', '/philosophy', 'philosophy'],
+                ['Tech', '/tech', 'technology']
+            ];
+            for (const d of defaults) {
+                await pool.query('INSERT INTO sections (label, path, category) VALUES ($1, $2, $3)', d);
+            }
+            console.log('Seeded default sections (PG)');
+        }
+    }).catch(err => console.error('Error creating sections table in PG', err));
+
+    pool.query(`CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )`).then(async () => {
+        const res = await pool.query("SELECT count(*) FROM settings WHERE key = 'no_posts_text'");
+        if (parseInt(res.rows[0].count) === 0) {
+            await pool.query("INSERT INTO settings (key, value) VALUES ($1, $2)", ['no_posts_text', 'No research found for this topic.']);
+            console.log('Seeded default settings (PG)');
+        }
+    }).catch(err => console.error('Error creating settings table in PG', err));
 
     // Convert '?' style params to '$1', '$2' etc
     const convertSql = (sql) => {
@@ -93,7 +125,53 @@ if (process.env.DATABASE_URL) {
               file TEXT,
               date TEXT
             )`, (err) => {
-                if (err) console.error('Error creating table', err);
+                if (err) console.error('Error creating papers table', err);
+            });
+
+            // Sections Table
+            localDb.run(`CREATE TABLE IF NOT EXISTS sections (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              label TEXT NOT NULL,
+              path TEXT NOT NULL,
+              category TEXT NOT NULL
+            )`, (err) => {
+                if (err) {
+                    console.error('Error creating sections table', err);
+                } else {
+                    // Seed defaults if empty
+                    localDb.get("SELECT count(*) as count FROM sections", [], (err, row) => {
+                        if (row && row.count === 0) {
+                            const defaults = [
+                                { label: 'History', path: '/history', category: 'history' },
+                                { label: 'Physics', path: '/physics', category: 'physics' },
+                                { label: 'Philosophy', path: '/philosophy', category: 'philosophy' },
+                                { label: 'Tech', path: '/tech', category: 'technology' }
+                            ];
+                            const insert = localDb.prepare("INSERT INTO sections (label, path, category) VALUES (?, ?, ?)");
+                            defaults.forEach(s => insert.run(s.label, s.path, s.category));
+                            insert.finalize();
+                            console.log('Seeded default sections');
+                        }
+                    });
+                }
+            });
+
+            // Settings Table
+            localDb.run(`CREATE TABLE IF NOT EXISTS settings (
+              key TEXT PRIMARY KEY,
+              value TEXT NOT NULL
+            )`, (err) => {
+                if (err) {
+                    console.error('Error creating settings table', err);
+                } else {
+                    // Seed defaults
+                    localDb.get("SELECT count(*) as count FROM settings WHERE key = 'no_posts_text'", [], (err, row) => {
+                        if (row && row.count === 0) {
+                            localDb.run("INSERT INTO settings (key, value) VALUES (?, ?)", ['no_posts_text', 'No research found for this topic.']);
+                            console.log('Seeded default settings');
+                        }
+                    });
+                }
             });
         }
     });

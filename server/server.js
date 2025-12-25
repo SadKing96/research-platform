@@ -100,6 +100,111 @@ app.delete('/api/papers/:id', (req, res) => {
     );
 });
 
+// SECTIONS API
+
+// GET all sections
+app.get('/api/sections', (req, res) => {
+    db.all("SELECT * FROM sections", [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ "error": err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+// POST new section
+app.post('/api/sections', (req, res) => {
+    const { label, path, category } = req.body;
+    db.run(
+        'INSERT INTO sections (label, path, category) VALUES (?, ?, ?)',
+        [label, path, category],
+        (err, result) => {
+            if (err) {
+                res.status(400).json({ "error": err.message });
+                return;
+            }
+            res.json({
+                "message": "success",
+                "data": { id: result.id, label, path, category }
+            });
+        }
+    );
+});
+
+// DELETE section
+app.delete('/api/sections/:id', (req, res) => {
+    db.run(
+        'DELETE FROM sections WHERE id = ?',
+        [req.params.id],
+        (err, result) => {
+            if (err) {
+                res.status(400).json({ "error": err.message });
+                return;
+            }
+            res.json({ "message": "deleted", changes: result.changes });
+        }
+    );
+});
+
+// SETTINGS API
+
+// GET all settings
+app.get('/api/settings', (req, res) => {
+    db.all("SELECT * FROM settings", [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ "error": err.message });
+            return;
+        }
+        // Convert array to object for easier frontend consumption
+        const settings = {};
+        rows.forEach(row => {
+            settings[row.key] = row.value;
+        });
+        res.json(settings);
+    });
+});
+
+// POST update setting
+app.post('/api/settings', (req, res) => {
+    const { key, value } = req.body;
+    db.run(
+        'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+        [key, value],
+        (err, result) => {
+            // SQLite might not support ON CONFLICT in some versions or via this driver easily if not configured, 
+            // but standard SQLite 3.24+ does. 
+            // If it fails, we might need a checking logic, but let's try UPSERT first.
+            if (err) {
+                // Fallback for older SQLite if needed: DELETE then INSERT, or UPDATE then INSERT
+                // For now, let's try a simple UPDATE, if changes=0 then INSERT
+                db.run('UPDATE settings SET value = ? WHERE key = ?', [value, key], (err2, result2) => {
+                    if (err2) {
+                        res.status(400).json({ "error": err2.message });
+                        return;
+                    }
+                    if (result2.changes === 0) {
+                        db.run('INSERT INTO settings (key, value) VALUES (?, ?)', [key, value], (err3, result3) => {
+                            if (err3) {
+                                res.status(400).json({ "error": err3.message });
+                                return;
+                            }
+                            res.json({ "message": "created", data: { key, value } });
+                        });
+                    } else {
+                        res.json({ "message": "updated", data: { key, value } });
+                    }
+                });
+                return;
+            }
+            res.json({
+                "message": "success",
+                "data": { key, value }
+            });
+        }
+    );
+});
+
 // Cloudflare Metrics Endpoint
 app.get('/api/metrics', async (req, res) => {
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;

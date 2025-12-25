@@ -1,21 +1,16 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useResearch } from '../context/ResearchContext';
 import { useState } from 'react';
 import LoginModal from './LoginModal';
 
 const Layout = () => {
     const navigate = useNavigate();
     const { isAdmin, toggleAdmin } = useAuth();
+    const { sections } = useResearch();
     const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-    const navItems = [
-        { path: '/', label: 'Home' },
-        { path: '/history', label: 'History' },
-        { path: '/physics', label: 'Physics' },
-        { path: '/philosophy', label: 'Philosophy' },
-        { path: '/tech', label: 'Tech' },
-        { path: '/library', label: 'Library' },
-    ];
+
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -40,28 +35,73 @@ const Layout = () => {
                     </h2>
                 </div>
 
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem' }}></div>
+
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.path}
-                            to={item.path}
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                            style={({ isActive }) => ({
-                                padding: '0.75rem 1rem',
-                                borderRadius: '0.75rem',
-                                color: isActive ? 'white' : 'var(--text-secondary)',
-                                background: isActive ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
-                                fontWeight: isActive ? 600 : 400,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.75rem',
-                                transition: 'all 0.2s ease',
-                                textDecoration: 'none'
-                            })}
-                        >
-                            {item.label}
-                        </NavLink>
-                    ))}
+                    <NavLink
+                        to="/"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        style={({ isActive }) => ({
+                            padding: '0.75rem 1rem',
+                            borderRadius: '0.75rem',
+                            color: isActive ? 'white' : 'var(--text-secondary)',
+                            background: isActive ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                            fontWeight: isActive ? 600 : 400,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            transition: 'all 0.2s ease',
+                            textDecoration: 'none'
+                        })}
+                    >
+                        Home
+                    </NavLink>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '1rem' }}>
+                        {sections.map((item) => (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                                style={({ isActive }) => ({
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '0.5rem',
+                                    color: isActive ? 'white' : 'var(--text-secondary)',
+                                    background: isActive ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                                    fontWeight: isActive ? 600 : 400,
+                                    fontSize: '0.95rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    transition: 'all 0.2s ease',
+                                    textDecoration: 'none'
+                                })}
+                            >
+                                {item.label}
+                            </NavLink>
+                        ))}
+                    </div>
+
+                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0.5rem 0.5rem' }}></div>
+
+                    <NavLink
+                        to="/library"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        style={({ isActive }) => ({
+                            padding: '0.75rem 1rem',
+                            borderRadius: '0.75rem',
+                            color: isActive ? 'white' : 'var(--text-secondary)',
+                            background: isActive ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                            fontWeight: isActive ? 600 : 400,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            transition: 'all 0.2s ease',
+                            textDecoration: 'none'
+                        })}
+                    >
+                        Library
+                    </NavLink>
 
                     {isAdmin && (
                         <>

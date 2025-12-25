@@ -6,7 +6,7 @@ import { useResearch } from '../context/ResearchContext';
 const Publish = () => {
     const navigate = useNavigate();
     const { isAdmin } = useAuth();
-    const { addPaper } = useResearch();
+    const { addPaper, sections } = useResearch();
 
     useEffect(() => {
         if (!isAdmin) {
@@ -14,12 +14,20 @@ const Publish = () => {
         }
     }, [isAdmin, navigate]);
 
+    // Use first section as default if available
     const [formData, setFormData] = useState({
         title: '',
         abstract: '',
-        topic: 'history',
+        topic: sections.length > 0 ? sections[0].category : '',
         file: null
     });
+
+    // Update default topic when sections load
+    useEffect(() => {
+        if (sections.length > 0 && !formData.topic) {
+            setFormData(prev => ({ ...prev, topic: sections[0].category }));
+        }
+    }, [sections]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -79,10 +87,9 @@ const Publish = () => {
                             cursor: 'pointer'
                         }}
                     >
-                        <option value="history">History</option>
-                        <option value="physics">Physics</option>
-                        <option value="philosophy">Philosophy</option>
-                        <option value="tech">Technology</option>
+                        {sections.map(section => (
+                            <option key={section.id} value={section.category}>{section.label}</option>
+                        ))}
                     </select>
                 </div>
 

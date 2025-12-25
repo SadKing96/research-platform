@@ -6,6 +6,10 @@ const API_URL = '/api/papers';
 
 export const ResearchProvider = ({ children }) => {
     const [papers, setPapers] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [settings, setSettings] = useState({
+        no_posts_text: 'No research found for this topic.'
+    });
 
     const fetchPapers = async () => {
         try {
@@ -19,8 +23,35 @@ export const ResearchProvider = ({ children }) => {
         }
     };
 
+    const fetchSections = async () => {
+        try {
+            const response = await fetch('/api/sections');
+            if (response.ok) {
+                const data = await response.json();
+                setSections(data);
+            }
+        } catch (error) {
+            console.error('Error fetching sections:', error);
+        }
+    };
+
+    const fetchSettings = async () => {
+        try {
+            const response = await fetch('/api/settings');
+            if (response.ok) {
+                const data = await response.json();
+                // Merge with defaults in case of missing keys
+                setSettings(prev => ({ ...prev, ...data }));
+            }
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+        }
+    };
+
     useEffect(() => {
         fetchPapers();
+        fetchSections();
+        fetchSettings();
     }, []);
 
     const addPaper = async (paperData) => {
@@ -59,8 +90,60 @@ export const ResearchProvider = ({ children }) => {
         }
     };
 
+    const addSection = async (section) => {
+        try {
+            const response = await fetch('/api/sections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(section)
+            });
+            if (response.ok) {
+                fetchSections();
+            }
+        } catch (error) {
+            console.error('Error adding section:', error);
+        }
+    };
+
+    const deleteSection = async (id) => {
+        try {
+            const response = await fetch(`/api/sections/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                setSections(prev => prev.filter(s => s.id !== id));
+            }
+        } catch (error) {
+            console.error('Error deleting section:', error);
+        }
+    };
+
+    const updateSetting = async (key, value) => {
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, value })
+            });
+            if (response.ok) {
+                setSettings(prev => ({ ...prev, [key]: value }));
+            }
+        } catch (error) {
+            console.error('Error updating setting:', error);
+        }
+    };
+
     return (
-        <ResearchContext.Provider value={{ papers, addPaper, deletePaper }}>
+        <ResearchContext.Provider value={{
+            papers,
+            sections,
+            settings,
+            addPaper,
+            deletePaper,
+            addSection,
+            deleteSection,
+            updateSetting
+        }}>
             {children}
         </ResearchContext.Provider>
     );

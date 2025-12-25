@@ -9,23 +9,38 @@ import { ResearchProvider } from './context/ResearchContext';
 import Library from './components/Library';
 import AdminDashboard from './components/AdminDashboard'; // Import new component
 
+import { useResearch } from './context/ResearchContext';
+
+const AppContent = () => {
+  const { sections } = useResearch();
+
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<TopicPage title="Discover" category="all disciplines" />} />
+
+        {sections.map(section => (
+          <Route
+            key={section.id}
+            path={section.path.startsWith('/') ? section.path.substring(1) : section.path}
+            element={<TopicPage title={section.label} category={section.category} />}
+          />
+        ))}
+
+        <Route path="library" element={<Library />} />
+        <Route path="publish" element={<Publish />} />
+        <Route path="admin" element={<AdminDashboard />} />
+      </Route>
+    </Routes>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
       <ResearchProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<TopicPage title="Discover" category="all disciplines" />} />
-              <Route path="history" element={<TopicPage title="History" category="history" />} />
-              <Route path="physics" element={<TopicPage title="Physics" category="physics" />} />
-              <Route path="philosophy" element={<TopicPage title="Philosophy" category="philosophy" />} />
-              <Route path="tech" element={<TopicPage title="Technology" category="technology" />} />
-              <Route path="library" element={<Library />} />
-              <Route path="publish" element={<Publish />} />
-              <Route path="admin" element={<AdminDashboard />} />
-            </Route>
-          </Routes>
+          <AppContent />
         </BrowserRouter>
       </ResearchProvider>
     </AuthProvider>

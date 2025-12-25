@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ExpandedPost from './ExpandedPost';
 
 const TopicPage = ({ title, category }) => {
-    const { papers, deletePaper } = useResearch();
+    const { papers, deletePaper, settings } = useResearch();
     const { isAdmin } = useAuth();
     const [expandedPaperId, setExpandedPaperId] = useState(null);
 
@@ -66,7 +66,7 @@ const TopicPage = ({ title, category }) => {
                     </div>
                 ))}
                 {filteredPapers.length === 0 && (
-                    <p style={{ color: 'var(--text-secondary)' }}>No research found for this topic.</p>
+                    <p style={{ color: 'var(--text-secondary)' }}>{settings?.no_posts_text || 'No research found for this topic.'}</p>
                 )}
             </div>
         </div>
