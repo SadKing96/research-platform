@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
@@ -205,62 +206,69 @@ app.post('/api/settings', (req, res) => {
     );
 });
 
+
 // Cloudflare Metrics Endpoint
 app.get('/api/metrics', async (req, res) => {
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
     const zoneId = process.env.CLOUDFLARE_ZONE_ID;
 
     if (!apiToken || !zoneId) {
-        // Return mock data if not configured, for development
-        return res.json({
-            viewer: {
-                zones: [{
-                    httpRequests1dGroups: [
-                        { date: { date: '2023-10-26' }, sum: { pageViews: 120, uniqueVisitors: 80 } },
-                        { date: { date: '2023-10-27' }, sum: { pageViews: 150, uniqueVisitors: 90 } }
-                    ]
-                }]
-            }
-        });
+        console.error("Missing Cloudflare credentials");
+        return res.status(500).json({ error: 'Server configuration error: Missing Cloudflare credentials' });
     }
 
-    try {
-        const query = `
-          query {
-            viewer {
-              zones(filter: { zoneTag: "${zoneId}" }) {
-                httpRequests1dGroups(limit: 7, orderBy: [date_ASC]) {
-                  date { date }
-                  sum {
-                    pageViews
-                    uniqueVisitors
-                  }
-                }
-              }
+
+
+    const query = `
+      query getMetrics($zoneTag: String) {
+        viewer {
+          zones(filter: { zoneTag: $zoneTag }) {
+            httpRequests1dGroups(limit: 1) {
+               date { date }
+               sum {
+                 pageViews
+                 uniqueVisitors
+               }
             }
           }
-        `;
+        }
+      }
+    `;
 
+    try {
         const response = await fetch('https://api.cloudflare.com/client/v4/graphql', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiToken}`
+                'Authorization': `Bearer ${apiToken.trim()}`
             },
-            body: JSON.stringify({ query })
+            body: JSON.stringify({
+                query,
+                variables: { zoneTag: zoneId.trim() }
+            })
         });
 
         const data = await response.json();
+
         if (data.errors) {
             console.error('Cloudflare API Errors:', data.errors);
-            return res.status(500).json({ error: 'Cloudflare API error' });
+            // Propagate the first error message to the client
+            return res.status(502).json({ error: 'Cloudflare API Error: ' + data.errors[0].message });
         }
+
+        if (!data.data || !data.data.viewer) {
+            console.error('Unexpected Cloudflare response structure:', data);
+            return res.status(502).json({ error: 'Invalid response from Cloudflare' });
+        }
+
         res.json(data.data);
+
     } catch (error) {
         console.error('Metrics fetch error:', error);
-        res.status(500).json({ error: 'Failed to fetch metrics' });
+        res.status(500).json({ error: 'Failed to fetch metrics: ' + error.message });
     }
 });
+
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

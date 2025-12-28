@@ -26,12 +26,17 @@ const AdminDashboard = () => {
     // Metrics Logic
     const [metricsData, setMetricsData] = useState(null);
     const [loadingMetrics, setLoadingMetrics] = useState(true);
+    const [metricsError, setMetricsError] = useState(null);
 
     useEffect(() => {
         const fetchMetrics = async () => {
             try {
                 const response = await fetch('/api/metrics');
                 const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch metrics');
+                }
 
                 if (data && data.viewer && data.viewer.zones && data.viewer.zones[0]) {
                     const groups = data.viewer.zones[0].httpRequests1dGroups;
@@ -50,6 +55,7 @@ const AdminDashboard = () => {
                 }
             } catch (error) {
                 console.error("Failed to fetch metrics", error);
+                setMetricsError(error.message);
             } finally {
                 setLoadingMetrics(false);
             }
@@ -60,14 +66,14 @@ const AdminDashboard = () => {
     const metrics = [
         {
             label: 'Total Visits (7d)',
-            value: loadingMetrics ? '...' : (metricsData?.pageViews?.toLocaleString() || '0'),
-            change: loadingMetrics ? '' : '+12%',
+            value: loadingMetrics ? '...' : metricsError ? 'Error' : (metricsData?.pageViews?.toLocaleString() || '0'),
+            change: loadingMetrics ? '' : metricsError ? '' : '+12%',
             color: '#8b5cf6'
         },
         {
             label: 'Unique Visitors (7d)',
-            value: loadingMetrics ? '...' : (metricsData?.uniqueVisitors?.toLocaleString() || '0'),
-            change: loadingMetrics ? '' : '+5.4%',
+            value: loadingMetrics ? '...' : metricsError ? 'Error' : (metricsData?.uniqueVisitors?.toLocaleString() || '0'),
+            change: loadingMetrics ? '' : metricsError ? '' : '+5.4%',
             color: '#ec4899'
         },
         { label: 'Active Sessions', value: '450', change: '-2%', color: '#06b6d4' },
