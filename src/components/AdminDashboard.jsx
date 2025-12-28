@@ -11,7 +11,10 @@ const AdminDashboard = () => {
         addSection,
         deleteSection,
         settings,
-        updateSetting
+        updateSetting,
+        books,
+        addBook,
+        deleteBook
     } = useResearch();
     const { isAdmin } = useAuth();
     const navigate = useNavigate();
@@ -91,11 +94,25 @@ const AdminDashboard = () => {
     const [newSection, setNewSection] = useState({ label: '', path: '', category: '' });
     const [localSettings, setLocalSettings] = useState({ no_posts_text: '' });
 
+    // Book Management Logic
+    const [newBook, setNewBook] = useState({ title: '', author: '', summary: '', recommendation: '', cover: null });
+    const handleAddBook = (e) => {
+        e.preventDefault();
+        addBook(newBook);
+        setNewBook({ title: '', author: '', summary: '', recommendation: '', cover: null });
+        alert('Book added!');
+    };
+
     useEffect(() => {
         if (settings) {
             setLocalSettings(prev => ({ ...prev, ...settings }));
         }
     }, [settings]);
+
+    // Handle home metrics
+    const handleUpdateHomeMetric = (key, value) => {
+        updateSetting(key, value);
+    };
 
     const handleAddSection = (e) => {
         e.preventDefault();
@@ -143,10 +160,24 @@ const AdminDashboard = () => {
                     >
                         Content Management
                     </button>
+                    <button
+                        onClick={() => setActiveTab('books')}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            borderRadius: '0.5rem',
+                            border: 'none',
+                            background: activeTab === 'books' ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                            color: activeTab === 'books' ? 'white' : 'var(--text-secondary)',
+                            fontWeight: activeTab === 'books' ? 600 : 400,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Book List
+                    </button>
                 </div>
             </div>
 
-            {activeTab === 'overview' ? (
+            {activeTab === 'overview' && (
                 <>
                     {/* Metrics Row */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
@@ -243,7 +274,9 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 </>
-            ) : (
+            )}
+
+            {activeTab === 'content' && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '2rem' }}>
 
                     {/* Add Section Form */}
@@ -371,6 +404,256 @@ const AdminDashboard = () => {
                             </div>
                         </div>
 
+                        {/* Home Metrics Settings */}
+                        <div className="glass-panel" style={{ padding: '2rem' }}>
+                            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Home Section Metrics</h2>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                    <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-primary)' }}>Quantitative Metrics</h3>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Total Sources Cited</label>
+                                        <input
+                                            type="number"
+                                            value={localSettings.home_metric_sources_cited || ''}
+                                            onChange={e => {
+                                                setLocalSettings(prev => ({ ...prev, home_metric_sources_cited: e.target.value }));
+                                                handleUpdateHomeMetric('home_metric_sources_cited', e.target.value);
+                                            }}
+                                            placeholder="e.g. 150"
+                                            style={{
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--border-glass)',
+                                                padding: '0.75rem',
+                                                borderRadius: '0.5rem',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Total Words Written</label>
+                                        <input
+                                            type="number"
+                                            value={localSettings.home_metric_words_written || ''}
+                                            onChange={e => {
+                                                setLocalSettings(prev => ({ ...prev, home_metric_words_written: e.target.value }));
+                                                handleUpdateHomeMetric('home_metric_words_written', e.target.value);
+                                            }}
+                                            placeholder="e.g. 50000"
+                                            style={{
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--border-glass)',
+                                                padding: '0.75rem',
+                                                borderRadius: '0.5rem',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Total Papers (Manual Override)</label>
+                                        <input
+                                            type="number"
+                                            value={localSettings.home_metric_papers_count || ''}
+                                            onChange={e => {
+                                                setLocalSettings(prev => ({ ...prev, home_metric_papers_count: e.target.value }));
+                                                handleUpdateHomeMetric('home_metric_papers_count', e.target.value);
+                                            }}
+                                            placeholder="Leave empty to use actual count"
+                                            style={{
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--border-glass)',
+                                                padding: '0.75rem',
+                                                borderRadius: '0.5rem',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                    <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-primary)' }}>Qualitative Metrics</h3>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Most Cited Authors (Comma separated)</label>
+                                        <input
+                                            type="text"
+                                            value={localSettings.home_metric_most_cited_authors || ''}
+                                            onChange={e => {
+                                                setLocalSettings(prev => ({ ...prev, home_metric_most_cited_authors: e.target.value }));
+                                                handleUpdateHomeMetric('home_metric_most_cited_authors', e.target.value);
+                                            }}
+                                            placeholder="e.g. Foucault, Haraway, Fisher"
+                                            style={{
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--border-glass)',
+                                                padding: '0.75rem',
+                                                borderRadius: '0.5rem',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Most Referenced Theories</label>
+                                        <input
+                                            type="text"
+                                            value={localSettings.home_metric_most_referenced_theories || ''}
+                                            onChange={e => {
+                                                setLocalSettings(prev => ({ ...prev, home_metric_most_referenced_theories: e.target.value }));
+                                                handleUpdateHomeMetric('home_metric_most_referenced_theories', e.target.value);
+                                            }}
+                                            placeholder="e.g. Critical Theory, Post-humanism"
+                                            style={{
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--border-glass)',
+                                                padding: '0.75rem',
+                                                borderRadius: '0.5rem',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Citation Diversity Score</label>
+                                        <input
+                                            type="text"
+                                            value={localSettings.home_metric_citation_diversity || ''}
+                                            onChange={e => {
+                                                setLocalSettings(prev => ({ ...prev, home_metric_citation_diversity: e.target.value }));
+                                                handleUpdateHomeMetric('home_metric_citation_diversity', e.target.value);
+                                            }}
+                                            placeholder="e.g. 8.5/10"
+                                            style={{
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--border-glass)',
+                                                padding: '0.75rem',
+                                                borderRadius: '0.5rem',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Primary Influence (Format: Label:%, Label:%)</label>
+                                        <input
+                                            type="text"
+                                            value={localSettings.home_metric_primary_influence || ''}
+                                            onChange={e => {
+                                                setLocalSettings(prev => ({ ...prev, home_metric_primary_influence: e.target.value }));
+                                                handleUpdateHomeMetric('home_metric_primary_influence', e.target.value);
+                                            }}
+                                            placeholder="e.g. Books:40, Papers:30, Lived:30"
+                                            style={{
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--border-glass)',
+                                                padding: '0.75rem',
+                                                borderRadius: '0.5rem',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'books' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '2rem' }}>
+                    {/* Add Book Form */}
+                    <div className="glass-panel" style={{ padding: '2rem' }}>
+                        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Add New Book</h2>
+                        <form onSubmit={handleAddBook} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Title</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newBook.title}
+                                    onChange={e => setNewBook({ ...newBook, title: e.target.value })}
+                                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '0.75rem', borderRadius: '0.5rem', color: 'white', outline: 'none' }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Author</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newBook.author}
+                                    onChange={e => setNewBook({ ...newBook, author: e.target.value })}
+                                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '0.75rem', borderRadius: '0.5rem', color: 'white', outline: 'none' }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Cover Image</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={e => setNewBook({ ...newBook, cover: e.target.files[0] })}
+                                    style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Summary</label>
+                                <textarea
+                                    required
+                                    rows="4"
+                                    value={newBook.summary}
+                                    onChange={e => setNewBook({ ...newBook, summary: e.target.value })}
+                                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '0.75rem', borderRadius: '0.5rem', color: 'white', outline: 'none', resize: 'vertical' }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Why I Suggest It</label>
+                                <textarea
+                                    required
+                                    rows="4"
+                                    value={newBook.recommendation}
+                                    onChange={e => setNewBook({ ...newBook, recommendation: e.target.value })}
+                                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', padding: '0.75rem', borderRadius: '0.5rem', color: 'white', outline: 'none', resize: 'vertical' }}
+                                />
+                            </div>
+                            <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>Add Book</button>
+                        </form>
+                    </div>
+
+                    {/* Books List & Delete */}
+                    <div className="glass-panel" style={{ padding: '2rem' }}>
+                        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Manage Books</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {books.map(book => (
+                                <div key={book.id} style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    borderRadius: '0.5rem'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        {book.cover && <img src={`http://localhost:3001/uploads/${book.cover}`} alt={book.title} style={{ width: '40px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />}
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontWeight: 600 }}>{book.title}</span>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{book.author}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm(`Delete ${book.title}?`)) deleteBook(book.id);
+                                        }}
+                                        style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}

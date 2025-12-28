@@ -7,6 +7,7 @@ import Publish from './components/Publish';
 import { AuthProvider } from './context/AuthContext';
 import { ResearchProvider } from './context/ResearchContext';
 import Library from './components/Library';
+import ReadingList from './components/ReadingList';
 import AdminDashboard from './components/AdminDashboard'; // Import new component
 
 import { useResearch } from './context/ResearchContext';
@@ -28,6 +29,7 @@ const AppContent = () => {
         ))}
 
         <Route path="library" element={<Library />} />
+        <Route path="reading-list" element={<ReadingList />} />
         <Route path="publish" element={<Publish />} />
         <Route path="admin" element={<AdminDashboard />} />
       </Route>

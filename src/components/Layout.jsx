@@ -103,6 +103,27 @@ const Layout = () => {
                         Library
                     </NavLink>
 
+                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '1rem 0' }}></div>
+
+                    <NavLink
+                        to="/reading-list"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        style={({ isActive }) => ({
+                            padding: '0.75rem 1rem',
+                            borderRadius: '0.75rem',
+                            color: isActive ? 'white' : 'var(--text-secondary)',
+                            background: isActive ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                            fontWeight: isActive ? 600 : 400,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            transition: 'all 0.2s ease',
+                            textDecoration: 'none'
+                        })}
+                    >
+                        Recommended Reading
+                    </NavLink>
+
                     {isAdmin && (
                         <>
                             <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '1rem 0' }}></div>
@@ -167,7 +188,6 @@ const Layout = () => {
                             onClick={() => !isAdmin && setIsLoginOpen(true)}
                         >
                             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(to bottom right, #8b5cf6, #06b6d4)' }}></div>
-                            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Researcher</span>
                         </div>
                     </div>
                 </header>

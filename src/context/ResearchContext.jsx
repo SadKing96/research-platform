@@ -7,6 +7,7 @@ const API_URL = '/api/papers';
 export const ResearchProvider = ({ children }) => {
     const [papers, setPapers] = useState([]);
     const [sections, setSections] = useState([]);
+    const [books, setBooks] = useState([]);
     const [settings, setSettings] = useState({
         no_posts_text: 'No research found for this topic.'
     });
@@ -20,6 +21,18 @@ export const ResearchProvider = ({ children }) => {
             }
         } catch (error) {
             console.error('Error fetching papers:', error);
+        }
+    };
+
+    const fetchBooks = async () => {
+        try {
+            const response = await fetch('/api/books');
+            if (response.ok) {
+                const data = await response.json();
+                setBooks(data);
+            }
+        } catch (error) {
+            console.error('Error fetching books:', error);
         }
     };
 
@@ -52,6 +65,7 @@ export const ResearchProvider = ({ children }) => {
         fetchPapers();
         fetchSections();
         fetchSettings();
+        fetchBooks();
     }, []);
 
     const addPaper = async (paperData) => {
@@ -133,6 +147,41 @@ export const ResearchProvider = ({ children }) => {
         }
     };
 
+    const addBook = async (bookData) => {
+        try {
+            const formData = new FormData();
+            formData.append('title', bookData.title);
+            formData.append('author', bookData.author);
+            formData.append('summary', bookData.summary);
+            formData.append('recommendation', bookData.recommendation);
+            if (bookData.cover) {
+                formData.append('cover', bookData.cover);
+            }
+
+            const response = await fetch('/api/books', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                fetchBooks();
+            }
+        } catch (error) {
+            console.error('Error adding book:', error);
+        }
+    };
+
+    const deleteBook = async (id) => {
+        try {
+            await fetch(`/api/books/${id}`, {
+                method: 'DELETE',
+            });
+            setBooks(prev => prev.filter(b => b.id !== id));
+        } catch (error) {
+            console.error('Error deleting book:', error);
+        }
+    };
+
     return (
         <ResearchContext.Provider value={{
             papers,
@@ -142,7 +191,10 @@ export const ResearchProvider = ({ children }) => {
             deletePaper,
             addSection,
             deleteSection,
-            updateSetting
+            updateSetting,
+            books,
+            addBook,
+            deleteBook
         }}>
             {children}
         </ResearchContext.Provider>

@@ -158,7 +158,8 @@ if (process.env.DATABASE_URL) {
 
             // Settings Table
             localDb.run(`CREATE TABLE IF NOT EXISTS settings (
-              key TEXT PRIMARY KEY,
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              key TEXT UNIQUE,
               value TEXT NOT NULL
             )`, (err) => {
                 if (err) {
@@ -173,10 +174,21 @@ if (process.env.DATABASE_URL) {
                     });
                 }
             });
+
+            // Books Table
+            localDb.run(`CREATE TABLE IF NOT EXISTS books (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              title TEXT NOT NULL,
+              author TEXT NOT NULL,
+              cover TEXT,
+              summary TEXT,
+              recommendation TEXT,
+              date TEXT
+            )`, (err) => {
+                if (err) console.error('Error creating books table', err);
+            });
         }
     });
-
-    // Wrapper to standardize callback signature
     db = {
         all: (sql, params, cb) => localDb.all(sql, params, cb),
         get: (sql, params, cb) => localDb.get(sql, params, cb),

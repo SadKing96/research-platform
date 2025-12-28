@@ -207,6 +207,56 @@ app.post('/api/settings', (req, res) => {
 });
 
 
+// BOOKS API
+
+// GET all books
+app.get('/api/books', (req, res) => {
+    db.all("SELECT * FROM books ORDER BY id DESC", [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ "error": err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+// POST new book
+app.post('/api/books', upload.single('cover'), (req, res) => {
+    const { title, author, summary, recommendation } = req.body;
+    const cover = req.file ? req.file.filename : null;
+    const date = new Date().toISOString();
+
+    const sql = 'INSERT INTO books (title, author, cover, summary, recommendation, date) VALUES (?,?,?,?,?,?)';
+    const params = [title, author, cover, summary, recommendation, date];
+
+    db.run(sql, params, (err, result) => {
+        if (err) {
+            res.status(400).json({ "error": err.message });
+            return;
+        }
+        res.json({
+            "message": "success",
+            "data": { id: result.id, title, author, cover, summary, recommendation, date }
+        });
+    });
+});
+
+// DELETE book
+app.delete('/api/books/:id', (req, res) => {
+    db.run(
+        'DELETE FROM books WHERE id = ?',
+        [req.params.id],
+        (err, result) => {
+            if (err) {
+                res.status(400).json({ "error": err.message });
+                return;
+            }
+            res.json({ "message": "deleted", changes: result.changes });
+        }
+    );
+});
+
+
 // Cloudflare Metrics Endpoint
 app.get('/api/metrics', async (req, res) => {
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
